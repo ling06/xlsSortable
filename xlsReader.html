@@ -1,0 +1,39 @@
+<script src="/xlsReader.js"></script>
+<script>
+window.addEventListener('load', function() {
+    let xlsReader = new XlsReader();
+});
+</script>
+<style>
+.xlsReader-table .xlsReader-sortable {
+    padding-right: 18px;
+    position: relative;
+}
+.xlsReader-table .xlsReader-sortable:before,
+.xlsReader-table .xlsReader-sortable:after {
+    border: 4px solid transparent;
+    content: '';
+    display: block;
+    height: 0;
+    right: 5px;
+    top: 50%;
+    position: absolute;
+    width: 0;
+}
+.xlsReader-table .xlsReader-sortable:before {
+    border-bottom-color: #000;
+    margin-top: -9px;
+}
+.xlsReader-table .xlsReader-sortable:after {
+    border-top-color: #000;
+    margin-top: 1px;
+}
+.xlsReader-table .xlsReader-sortable-asc:after {
+    display: none;
+}
+.xlsReader-table .xlsReader-sortable-desc:before {
+    display: none;
+}
+</style>
+
+<div class="xls-table" data-file="/testXls.xls"></div>
