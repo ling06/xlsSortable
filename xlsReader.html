@@ -2,6 +2,10 @@
 <script>
 window.addEventListener('load', function() {
     let xlsReader = new XlsReader();
+    xlsReader.processTable('.table-with-options', {
+        file: '/testXls.xls',
+        theme: 'dark',
+    });
 });
 </script>
 <style>
@@ -34,6 +38,18 @@ window.addEventListener('load', function() {
 .xlsReader-table .xlsReader-sortable-desc:before {
     display: none;
 }
+
+.xlsReader-table_theme_dark .xlsReader-sortable {
+    background: #333;
+    color: #fff;
+}
+.xlsReader-table_theme_dark .xlsReader-sortable:before {
+    border-bottom-color: #fff;
+}
+.xlsReader-table .xlsReader-sortable:after {
+    border-top-color: #fff;
+}
 </style>
 
 <div class="xls-table" data-file="/testXls.xls"></div>
+<div class="table-with-options"></div>

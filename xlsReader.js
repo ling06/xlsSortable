@@ -1,9 +1,9 @@
-var XlsReader = function (options) {
+var XlsReader = function (selector, options) {
     options = Object.assign({
         autostart: true,
-        tableClass: 'xlsReader-table',
-        tableSortClass: 'xlsReader-sortable',
     }, options || {});
+
+    let queue = [];
 
     let parseExcel = function(file, callback) {
         let reader = new FileReader();
@@ -63,6 +63,9 @@ var XlsReader = function (options) {
 
         let table = document.createElement('table');
         table.classList.add(options.tableClass);
+        if (options.theme) {
+            table.classList.add(options.tableClass + '_theme_' + options.theme);
+        }
 
         let thead = document.createElement('thead');
         let theadTr = document.createElement('tr');
@@ -113,17 +116,39 @@ var XlsReader = function (options) {
     loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js', () => {
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js', () => {
             if (options.autostart) {
-                autostart(options);
+                autostart(selector, options);
+                if (queue.length) {
+                    let queueData;
+                    while (queueData = queue.pop()) {
+                        processTable(queueData[0], queueData[1]);
+                    }
+                }
             }
         });
     });
 
-    function autostart(options) {
-        let tables = document.querySelectorAll('.xls-table');
-        if (tables) {
-            tables.forEach(tableElement => {
-                let tableOptions = Object.assign(options, tableElement.dataset);
-                loadTable(tableElement.dataset.file, XLSobject => {
+    function processTable(selector, options) {
+        options = Object.assign({
+            tableClass: 'xlsReader-table',
+            tableSortClass: 'xlsReader-sortable',
+            theme: false,
+        }, options || {});
+
+        if (typeof XLSX === 'undefined') {
+            queue.push([selector, options]);
+            return true;
+        }
+        if (typeof selector !== 'undefined') {
+            if (typeof selector === 'string') {
+                let elements = document.querySelectorAll(selector);
+                if (elements) {
+                    elements.forEach(element => {
+                        processTable(element, options);
+                    });
+                }
+            } else {
+                let tableOptions = Object.assign(options, selector.dataset);
+                loadTable(options.file, XLSobject => {
                     let tableData = {headers: [], body: [], types: []},
                         typesCount = [];
                     if (XLSobject[0]) {
@@ -157,10 +182,20 @@ var XlsReader = function (options) {
                             }
                         });
                     });
-                    formTable(tableElement, tableData, tableOptions);
+                    formTable(selector, tableData, tableOptions);
                 });
-            });
+            }
         }
     }
+
+    function autostart(selector, options) {
+        selector = selector || '.xls-table';
+        options = options || {};
+        processTable(selector, options);
+    }
+
+    return {
+        processTable,
+    };
 
 };
