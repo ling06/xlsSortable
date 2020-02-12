@@ -3,6 +3,27 @@ var XlsReader = function (selector, options) {
         autostart: true,
     }, options || {});
 
+    let sortFunctions = {
+        number: function (a, b, sortDir) {
+            return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                1 :
+                (
+                    (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                        -1 :
+                        0
+                );
+        },
+        string: function (a, b, sortDir) {
+            return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                1 :
+                (
+                    (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                        -1 :
+                        0
+                );
+        },
+    };
+
     let queue = [];
 
     let parseExcel = function(file, callback) {
@@ -40,16 +61,32 @@ var XlsReader = function (selector, options) {
     }
 
     function sortData(data, sortBy, sortDir) {
-        data = data.sort((a, b) => {
-            return (sortDir === 'asc' && a[sortBy] > b[sortBy]) || (sortDir === 'desc' && a[sortBy] < b[sortBy]) ?
-                1 :
-                (
-                    (sortDir === 'asc' && a[sortBy] < b[sortBy]) || (sortDir === 'desc' && a[sortBy] > b[sortBy]) ?
-                        -1 :
-                        0
-                );
+        data.body = data.body.sort((a, b) => {
+            if (typeof data.minValues[sortBy] !== 'undefined') {
+                if (a[sortBy] === data.minValues[sortBy] && b[sortBy] !== data.minValues[sortBy]) {
+                    return sortDir === 'asc' ? -1 : 1;
+                }
+                if (a[sortBy] !== data.minValues[sortBy] && b[sortBy] === data.minValues[sortBy]) {
+                    return sortDir === 'asc' ? 1 : -1;
+                }
+                if (a[sortBy] === data.minValues[sortBy] && b[sortBy] === data.minValues[sortBy]) {
+                    return 0;
+                }
+            }
+            if (typeof data.maxValues[sortBy] !== 'undefined') {
+                if (a[sortBy] === data.maxValues[sortBy] && b[sortBy] !== data.maxValues[sortBy]) {
+                    return sortDir === 'asc' ? 1 : -1;
+                }
+                if (a[sortBy] !== data.maxValues[sortBy] && b[sortBy] === data.maxValues[sortBy]) {
+                    return sortDir === 'asc' ? -1 : 1;
+                }
+                if (a[sortBy] === data.maxValues[sortBy] && b[sortBy] === data.maxValues[sortBy]) {
+                    return 0;
+                }
+            }
+            return sortFunctions[data.types[sortBy]](a[sortBy], b[sortBy], sortDir);
         });
-        return data;
+        return data.body;
     }
 
     function formTable(tableElement, tableData, options) {
@@ -58,7 +95,7 @@ var XlsReader = function (selector, options) {
             sortDir: '',
         }, options || {});
         if (options.sortBy !== -1 && options.sortDir) {
-            tableData.body = sortData(tableData.body, options.sortBy, options.sortDir);
+            tableData.body = sortData(tableData, options.sortBy, options.sortDir);
         }
 
         let table = document.createElement('table');
@@ -86,7 +123,7 @@ var XlsReader = function (selector, options) {
                             'asc';
                     }
                     options.sortBy = i;
-                    sortData(tableData.body, options.sortBy, options.sortDir);
+                    sortData(tableData, options.sortBy, options.sortDir);
                     formTable(tableElement, tableData, options);
                 });
             })(i);
@@ -149,7 +186,7 @@ var XlsReader = function (selector, options) {
             } else {
                 let tableOptions = Object.assign(options, selector.dataset);
                 loadTable(options.file, XLSobject => {
-                    let tableData = {headers: [], body: [], types: []},
+                    let tableData = {headers: [], body: [], types: [], minValues: [], maxValues: []},
                         typesCount = [];
                     if (XLSobject[0]) {
                         for (let header in XLSobject[0]) {
@@ -173,12 +210,25 @@ var XlsReader = function (selector, options) {
                         tableData.body.push(row);
                     });
                     for (let i in typesCount) {
-                        tableData.types.push(typesCount[i].number >= typesCount[i].string ? 'number' : 'string');
+                        if (typeof options['type-' + tableData.types.length] !== 'undefined') {
+                            tableData.types.push(options['type-' + tableData.types.length]);
+                        } else {
+                            tableData.types.push(typesCount[i].number >= typesCount[i].string ? 'number' : 'string');
+                        }
+                        if (typeof options['minValue-' + tableData.types.length] !== 'undefined') {
+                            tableData.minValues[tableData.types.length] = options['minValue-' + tableData.types.length];
+                        }
+                        if (typeof options['maxValue-' + tableData.types.length] !== 'undefined') {
+                            tableData.maxValues[tableData.types.length] = options['maxValue-' + tableData.types.length];
+                        }
                     }
                     tableData.body.forEach((dataRow, i) => {
                         dataRow.forEach((dataCell, j) => {
                             if (tableData.types[j] === 'number') {
                                 tableData.body[i][j] = parseFloat(dataCell);
+                                if (isNaN(tableData.body[i][j])) {
+                                    tableData.body[i][j] = dataCell;
+                                }
                             }
                         });
                     });

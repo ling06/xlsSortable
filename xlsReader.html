@@ -6,6 +6,11 @@ window.addEventListener('load', function() {
         file: '/testXls.xls',
         theme: 'dark',
     });
+    xlsReader.processTable('.table-with-types', {
+        file: '/testXls.xls',
+        'type-2': 'string',
+        'type-3': 'string',
+    });
 });
 </script>
 <style>
@@ -53,3 +58,5 @@ window.addEventListener('load', function() {
 
 <div class="xls-table" data-file="/testXls.xls"></div>
 <div class="table-with-options"></div>
+<div class="table-with-types"></div>
+<div class="xls-table" data-file="/testXls.xls" data-max-value-1="n/a"></div>
