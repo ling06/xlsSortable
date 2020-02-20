@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>xlsSortable</title>
+    <link rel="stylesheet" href="xlsSortable.css">
+    <style>
+        html, body {
+            font: 400 16px/1 Verdana;
+            margin: 0;
+            padding: 0;
+        }
+
+        fieldset {
+            border: 2px solid #999;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        legend {
+            padding: 5px 20px;
+            border: solid #999;
+            border-width: 0 2px;
+        }
+
+        .xlsSortable-table_theme_dark .xlsSortable-sortable {
+            background: #333;
+            color: #fff;
+        }
+        .xlsSortable-table_theme_dark .xlsSortable-sortable:before {
+            border-bottom-color: #fff;
+        }
+        .xlsSortable-table_theme_dark .xlsSortable-sortable:after {
+            border-top-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <fieldset>
+        <legend>Простой пример использования xlsSortable</legend>
+        <div class="xls-table" data-file="/testXls.xls"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable с дополнительными настройками</legend>
+        <div class="table-with-options"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable с переопределенными типами столбцов (внимание на сортировку цены)</legend>
+        <div class="table-with-types"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable с переопределенным минимальным значением столбца (внимание на сортировку цены)</legend>
+        <div class="xls-table" data-file="/testXls.xls" data-min-value-b="n/a"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable с пользовательским типом данных</legend>
+        <div class="table-with-customTypes"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable без сортировки по столбцам</legend>
+        <div class="xls-table" data-file="/testXls.xls" data-no-sort="c,d"></div>
+    </fieldset>
+    <fieldset>
+        <legend>Пример использования xlsSortable с событиями (см. консоль)</legend>
+        <div class="table-with-events"></div>
+    </fieldset>
+
+    <script src="/xlsSortable.min.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+
+            let xlsSortable = new XlsSortable();
+
+            // themed table
+            xlsSortable.processTable('.table-with-options', {
+                file: '/testXls.xls',
+                theme: 'dark',
+            });
+
+            // table with defined types
+            xlsSortable.processTable('.table-with-types', {
+                file: '/testXls.xls',
+                typeB: 'string',
+                typeC: 'string',
+            });
+
+            // table with defined types
+            xlsSortable.processTable('.table-with-events', {
+                file: '/testXls.xls',
+                tableLoaded: function (options) {
+                    console.log('tableLoaded', options);
+                },
+                tableSorted: function (options) {
+                    console.log('tableSorted', options);
+                },
+            });
+
+            // table with custom types
+            xlsSortable.processTable('.table-with-customTypes', {
+                file: '/testXls.xls',
+                typeC: 'evensOnly',
+                guessFunctions: [
+                    function (value, column) {
+                        if (column === 2) {
+                            return 'evensOnly';
+                        }
+                        return false;
+                    }
+                ],
+                sortFunctions: {
+                    evensOnly: function (a, b, sortDir) {
+                        a = parseFloat(a) || -Infinity;
+                        b = parseFloat(b) || -Infinity;
+                        return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                            1 :
+                            (
+                                (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                                    -1 :
+                                    0
+                            );
+                    }
+                },
+                printFunctions: {
+                    evensOnly: function (value) {
+                        return value % 2 ? '' : value;
+                    }
+                },
+            });
+
+        });
+    </script>
+
+</body>
+</html>

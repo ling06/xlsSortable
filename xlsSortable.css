@@ -1,0 +1,30 @@
+.xlsSortable-table .xlsSortable-sortable {
+  padding-right: 18px;
+  position: relative;
+}
+.xlsSortable-table .xlsSortable-sortable:before,
+.xlsSortable-table .xlsSortable-sortable:after {
+  border: 4px solid transparent;
+  content: '';
+  display: block;
+  height: 0;
+  right: 5px;
+  top: 50%;
+  position: absolute;
+  width: 0;
+}
+.xlsSortable-table .xlsSortable-sortable:before {
+  border-bottom-color: #000;
+  margin-top: -9px;
+}
+.xlsSortable-table .xlsSortable-sortable:after {
+  border-top-color: #000;
+  margin-top: 1px;
+}
+.xlsSortable-table .xlsSortable-sortable-asc:after {
+  display: none;
+}
+.xlsSortable-table .xlsSortable-sortable-desc:before {
+  display: none;
+}
+/*# sourceMappingURL=xlsSortable.css.map */

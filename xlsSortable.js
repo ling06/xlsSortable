@@ -1,10 +1,73 @@
-var XlsReader = function (selector, options) {
+var XlsSortable = function (selector, options) {
     options = Object.assign({
         autostart: true,
     }, options || {});
 
+    let guessFunctions = [
+        function (value, column) {
+            if (/^\d+[.\-\/]\d+[.\-\/]\d+ \d+:\d+(:\d+)?$/.test(value)) {
+                return 'datetime';
+            }
+            return false;
+        },
+        function (value, column) {
+            if (/^\d+[.\-\/]\d+[.\-\/]\d+$/.test(value)) {
+                return 'date';
+            }
+            return false;
+        },
+        function (value, column) {
+            if (/^\d+:\d+(:\d+)?$/.test(value)) {
+                return 'time';
+            }
+            return false;
+        },
+        function (value, column) {
+            if (!isNaN(parseFloat(value))) {
+                return 'number';
+            }
+            return false;
+        },
+        function (value, column) {
+            return 'string';
+        },
+    ];
+
     let sortFunctions = {
+        datetime: function (a, b, sortDir) {
+            a = a.replace(/(\d+)[.\/\-](\d+)[.\/\-](\d+)/, '$3-$2-$1');
+            b = b.replace(/(\d+)[.\/\-](\d+)[.\/\-](\d+)/, '$3-$2-$1');
+            return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                1 :
+                (
+                    (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                        -1 :
+                        0
+                );
+        },
+        date: function (a, b, sortDir) {
+            a = a.replace(/(\d+)[.\/\-](\d+)[.\/\-](\d+)/, '$3-$2-$1');
+            b = b.replace(/(\d+)[.\/\-](\d+)[.\/\-](\d+)/, '$3-$2-$1');
+            return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                1 :
+                (
+                    (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                        -1 :
+                        0
+                );
+        },
+        time: function (a, b, sortDir) {
+            return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                1 :
+                (
+                    (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                        -1 :
+                        0
+                );
+        },
         number: function (a, b, sortDir) {
+            a = parseFloat(a);
+            b = parseFloat(b);
             return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
                 1 :
                 (
@@ -21,6 +84,36 @@ var XlsReader = function (selector, options) {
                         -1 :
                         0
                 );
+        },
+    };
+
+    let printFunctions = {
+        datetime: function (value) {
+            if (/(\d+)\-(\d+)\-(\d+)/.test(value)) {
+                value = value.replace(/(\d+)\-(\d+)\-(\d+)/, '$3.$2.$1');
+            }
+            if (/\d+\/\d+\/\d+/.test(value)) {
+                value = value.split('/').join('.');
+            }
+            return value;
+        },
+        date: function (value) {
+            if (/\d+\-\d+\-\d+/.test(value)) {
+                return value.split('-').reverse().join('.');
+            }
+            if (/\d+\/\d+\/\d+/.test(value)) {
+                return value.split('/').join('.');
+            }
+            return value;
+        },
+        time: function (value) {
+            return value;
+        },
+        number: function (value) {
+            return value;
+        },
+        string: function (value) {
+            return value;
         },
     };
 
@@ -58,6 +151,25 @@ var XlsReader = function (selector, options) {
         fetch(url, {cache: 'no-cache'})
             .then(response => response.blob())
             .then(blob => parseExcel(blob, callback));
+    }
+
+    function numToRow(num, str) {
+        str = str || '';
+        const codeA = 'A'.charCodeAt(0);
+        const code = num % 26;
+        str = String.fromCharCode(codeA + code) + str;
+        num -= code;
+        return num ? numToRow(num/26-1, str) : str;
+    }
+
+    function guessType(value, column) {
+        for (let i = 0, il = guessFunctions.length; i < il; ++i) {
+            let type = guessFunctions[i](value, column);
+            if (type) {
+                return type;
+            }
+        }
+        return 'string';
     }
 
     function sortData(data, sortBy, sortDir) {
@@ -108,25 +220,30 @@ var XlsReader = function (selector, options) {
         let theadTr = document.createElement('tr');
         for (let i = 0, il = tableData.headers.length; i < il; ++i) {
             let th = document.createElement('th');
-            th.classList.add(options.tableSortClass);
-            if (options.sortBy === i) {
-                th.classList.add(options.tableSortClass + '-' + options.sortDir);
+            let colName = numToRow(i);
+            let isColSortable = typeof options.noSort === 'undefined' || options.noSort.indexOf(colName) === -1;
+            if (isColSortable) {
+                th.classList.add(options.tableSortClass);
+                if (options.sortBy === i) {
+                    th.classList.add(options.tableSortClass + '-' + options.sortDir);
+                }
+                (i => {
+                    th.addEventListener('click', () => {
+                        if (options.sortBy !== i) {
+                            options.sortDir = 'asc';
+                        } else {
+                            options.sortDir = options.sortDir === 'asc' ?
+                                'desc' :
+                                'asc';
+                        }
+                        options.sortBy = i;
+                        sortData(tableData, options.sortBy, options.sortDir);
+                        formTable(tableElement, tableData, options);
+                        fireEvent('tableSorted', options);
+                    });
+                })(i);
             }
             th.innerText = tableData.headers[i];
-            (i => {
-                th.addEventListener('click', () => {
-                    if (options.sortBy !== i) {
-                        options.sortDir = 'asc';
-                    } else {
-                        options.sortDir = options.sortDir === 'asc' ?
-                            'desc' :
-                            'asc';
-                    }
-                    options.sortBy = i;
-                    sortData(tableData, options.sortBy, options.sortDir);
-                    formTable(tableElement, tableData, options);
-                });
-            })(i);
             theadTr.appendChild(th);
         }
         thead.appendChild(theadTr);
@@ -164,12 +281,32 @@ var XlsReader = function (selector, options) {
         });
     });
 
+    function fireEvent(event, options) {
+        if (typeof options[event] === 'function') {
+            options[event].call(this, options);
+        }
+    }
+
     function processTable(selector, options) {
         options = Object.assign({
-            tableClass: 'xlsReader-table',
-            tableSortClass: 'xlsReader-sortable',
+            tableClass: 'xlsSortable-table',
+            tableSortClass: 'xlsSortable-sortable',
             theme: false,
         }, options || {});
+
+        if (typeof options.guessFunctions !== 'undefined') {
+            options.guessFunctions.reverse().forEach(guessFunction => {
+                if (typeof guessFunction === 'function') {
+                    guessFunctions.unshift(guessFunction);
+                }
+            });
+        }
+        if (typeof options.sortFunctions !== 'undefined') {
+            Object.assign(sortFunctions, options.sortFunctions);
+        }
+        if (typeof options.printFunctions !== 'undefined') {
+            Object.assign(printFunctions, options.printFunctions);
+        }
 
         if (typeof XLSX === 'undefined') {
             queue.push([selector, options]);
@@ -185,6 +322,10 @@ var XlsReader = function (selector, options) {
                 }
             } else {
                 let tableOptions = Object.assign(options, selector.dataset);
+                if (typeof tableOptions.noSort === 'string') {
+                    tableOptions.noSort = tableOptions.noSort.toUpperCase().split(',');
+                }
+                tableOptions.el = selector;
                 loadTable(options.file, XLSobject => {
                     let tableData = {headers: [], body: [], types: [], minValues: [], maxValues: []},
                         typesCount = [];
@@ -194,45 +335,56 @@ var XlsReader = function (selector, options) {
                                 continue;
                             }
                             tableData.headers.push(header);
-                            typesCount[header] = {number: 0, string: 0};
+                            typesCount[header] = {};
                         }
                     }
                     XLSobject.forEach(dataRow => {
                         let row = [];
                         for (let i in dataRow) {
                             row.push(typeof dataRow[i] !== 'undefined' ? dataRow[i] : '');
-                            if (isNaN(parseFloat(dataRow[i]))) {
-                                ++typesCount[i].string;
-                            } else {
-                                ++typesCount[i].number;
+                            let type = guessType(dataRow[i], i);
+                            if (typeof typesCount[i][type] === 'undefined') {
+                                typesCount[i][type] = 0;
                             }
+                            ++typesCount[i][type];
                         }
                         tableData.body.push(row);
                     });
                     for (let i in typesCount) {
-                        if (typeof options['type-' + tableData.types.length] !== 'undefined') {
-                            tableData.types.push(options['type-' + tableData.types.length]);
+                        let col = tableData.types.length;
+                        let colName = numToRow(col);
+                        let optionType = 'type' + colName;
+                        let optionMinValue = 'minValue' + colName;
+                        let optionMaxValue = 'maxValue' + colName;
+                        if (typeof options[optionType] !== 'undefined') {
+                            tableData.types.push(options[optionType]);
                         } else {
-                            tableData.types.push(typesCount[i].number >= typesCount[i].string ? 'number' : 'string');
+                            let maxType = {
+                                type: '',
+                                count: 0,
+                            };
+                            for (let type in typesCount[i]) {
+                                if (typesCount[i][type] > maxType.count) {
+                                    maxType.type = type;
+                                    maxType.count = typesCount[i][type];
+                                }
+                            }
+                            tableData.types.push(maxType.type);
                         }
-                        if (typeof options['minValue-' + tableData.types.length] !== 'undefined') {
-                            tableData.minValues[tableData.types.length] = options['minValue-' + tableData.types.length];
+                        if (typeof options[optionMinValue] !== 'undefined') {
+                            tableData.minValues[col] = options[optionMinValue];
                         }
-                        if (typeof options['maxValue-' + tableData.types.length] !== 'undefined') {
-                            tableData.maxValues[tableData.types.length] = options['maxValue-' + tableData.types.length];
+                        if (typeof options[optionMaxValue] !== 'undefined') {
+                            tableData.maxValues[col] = options[optionMaxValue];
                         }
                     }
                     tableData.body.forEach((dataRow, i) => {
                         dataRow.forEach((dataCell, j) => {
-                            if (tableData.types[j] === 'number') {
-                                tableData.body[i][j] = parseFloat(dataCell);
-                                if (isNaN(tableData.body[i][j])) {
-                                    tableData.body[i][j] = dataCell;
-                                }
-                            }
+                            tableData.body[i][j] = printFunctions[tableData.types[j]](dataCell);
                         });
                     });
                     formTable(selector, tableData, tableOptions);
+                    fireEvent('tableLoaded', tableOptions);
                 });
             }
         }
