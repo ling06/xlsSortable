@@ -1,0 +1,103 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  font: 400 16px/1 Verdana;
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+}
+
+fieldset {
+  border: 2px solid #999;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+}
+legend {
+  padding: 5px 20px;
+  border: solid #999;
+  border-width: 0 2px;
+}
+
+.xlsSortable-table_theme_dark {
+  .xlsSortable-sortable {
+    background: #333;
+    color: #fff;
+    &:before {
+      border-bottom-color: #fff;
+    }
+    &:after {
+      border-top-color: #fff;
+    }
+  }
+}
+
+#wrapper {
+  align-items: start;
+  display: flex;
+  justify-content: space-around;
+  @media screen and (max-width: 1680px) {
+    display: block;
+  }
+}
+
+.block {
+  padding: 1em;
+  width: 45%;
+  &-title {
+    font-weight: 900;
+    padding: 1em 0 0;
+  }
+  &-paragraph {
+    margin: 0;
+    padding: 1em 0 2em;
+  }
+  @media screen and (max-width: 1680px) {
+    margin: 0 auto 2em;
+    width: 90%;
+  }
+}
+
+code {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  display: block;
+  font-family: monospace;
+  margin: .5em;
+  padding: .5em;
+}
+
+ol {
+  margin: 0;
+  padding: 1em 0 2em;
+  list-style-position: inside;
+  li {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.options {
+  display: table;
+}
+.option {
+  display: table-row;
+  &-key {
+    color: #600;
+    display: table-cell;
+    padding: .3em;
+  }
+  &-value {
+    color: #060;
+    display: table-cell;
+    padding: .3em;
+  }
+  &-description {
+    color: #777;
+    display: table-cell;
+    padding: .3em;
+  }
+}

@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>xlsSortable</title>
+    <link rel="stylesheet" href="xlsSortable.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<div id="wrapper">
+
+    <div class="block">
+        <div class="block-title">Что это?</div>
+        <p class="block-paragraph">
+            xlsSortable - скрипт для отображения таблиц Excel в браузере с возможностью сортировки.
+        </p>
+        <div class="block-title">Какие требования?</div>
+        <p class="block-paragraph">
+            Любой современный браузер, кроме IE (на этим сейчас работаю).
+        </p>
+        <div class="block-title">Как использовать?</div>
+        <ol class="block-paragraph">
+            <li>Зайдите на <a href="https://github.com/ling06/xlsSortable" target="_blank">https://github.com/ling06/xlsSortable</a></li>
+            <li>Скачайте xlsSortable.css и xlsSortable.js</li>
+            <li>Загрузите xlsSortable.css, xlsSortable.js и нужную таблицу.xls себе на сайт</li>
+            <li>Пропишите внизу страницы вашего сайта <code>&lt;link rel="stylesheet" href="/путь/к/xlsSortable.css"&gt;<br>&lt;script src="/путь/к/xlsSortable.js"&gt;&lt;/script&gt;<br>&lt;script&gt;window.addEventListener('load', function() {var xlsSortable = new XlsSortable();});&lt;/script&gt;</code></li>
+            <li>Пропишите на странице вашего сайта <code>&lt;div class="xls-table" data-file="/путь/к/таблице.xls"&gt;&lt;/div&gt;</code></li>
+            <li>...</li>
+            <li>PROFIT!!!</li>
+        </ol>
+        <div class="block-title">А что есть для продвинутых пользователей?</div>
+        <p class="block-paragraph">
+            Настройки!<br>
+            Все настройки можно прописывать как в data-атрибутах, так и при ручном вызове в options:
+            <code>
+                var xlsSortable = new XlsSortable();<br>
+                xlsSortable.processTable('.table-with-options', options);
+            </code>
+            <div class="options">
+                <div class="option">
+                    <span class="option-key">file</span>
+                    <span class="option-value">'testXls.xls'</span>
+                    <span class="option-description">путь к файлу.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">theme</span>
+                    <span class="option-value">'dark'</span>
+                    <span class="option-description">дополнительный класс темы, в итоге получится что-то типа xlsSortable-table_theme_dark.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">typeA</span>
+                    <span class="option-value">'string'</span>
+                    <span class="option-description">явное указание типа столбца A. Если не указать, скрипт сам попробует "угадать".</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">minValueA</span>
+                    <span class="option-value">'n/a'</span>
+                    <span class="option-description">явное указание минимального значения типа столбца A.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">maxValueA</span>
+                    <span class="option-value">'9000+'</span>
+                    <span class="option-description">явное указание максимального значения типа столбца A.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">noSort</span>
+                    <span class="option-value">'b,c,d'</span>
+                    <span class="option-description">запретит сортировки столбцов B, C и D.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">guessFunctions</span>
+                    <span class="option-value">[function(value, column):boolean{...}, ...]</span>
+                    <span class="option-description">проверка столбца на соответствие пользовательскому типу данных.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">sortFunctions</span>
+                    <span class="option-value">{customType:function(a, b, sortDir):-1|0|1{}, ...}</span>
+                    <span class="option-description">функции сортировки данных пользовательского типа.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">printFunctions</span>
+                    <span class="option-value">{customType:function(value):String{}, ...}</span>
+                    <span class="option-description">функции отображения данных пользовательского типа.</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">tableLoaded</span>
+                    <span class="option-value">function(options){...}</span>
+                    <span class="option-description">обработка события загрузки таблицы</span>
+                </div>
+                <div class="option">
+                    <span class="option-key">tableSorted</span>
+                    <span class="option-value">function(options){...}</span>
+                    <span class="option-description">обработка события сортировки таблицы</span>
+                </div>
+            </div>
+        </p>
+    </div>
+    <div class="block">
+        <fieldset>
+            <legend>Простой пример использования xlsSortable</legend>
+            <div class="xls-table" data-file="testXls.xls"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable с дополнительными настройками</legend>
+            <div class="table-with-options"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable с переопределенными типами столбцов (внимание на сортировку цены)</legend>
+            <div class="table-with-types"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable с переопределенным минимальным значением столбца (внимание на сортировку цены)</legend>
+            <div class="xls-table" data-file="testXls.xls" data-min-value-b="n/a"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable с пользовательским типом данных</legend>
+            <div class="table-with-customTypes"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable без сортировки по столбцам</legend>
+            <div class="xls-table" data-file="testXls.xls" data-no-sort="c,d"></div>
+        </fieldset>
+        <fieldset>
+            <legend>Пример использования xlsSortable с событиями (см. консоль)</legend>
+            <div class="table-with-events"></div>
+        </fieldset>
+    </div>
+
+</div>
+
+<script src="xlsSortable.min.js"></script>
+<script>
+    window.addEventListener('load', function() {
+
+        var xlsSortable = new XlsSortable();
+
+        // themed table
+        xlsSortable.processTable('.table-with-options', {
+            file: 'testXls.xls',
+            theme: 'dark',
+        });
+
+        // table with defined types
+        xlsSortable.processTable('.table-with-types', {
+            file: 'testXls.xls',
+            typeB: 'string',
+            typeC: 'string',
+        });
+
+        // table with defined types
+        xlsSortable.processTable('.table-with-events', {
+            file: 'testXls.xls',
+            tableLoaded: function (options) {
+                console.log('tableLoaded', options);
+            },
+            tableSorted: function (options) {
+                console.log('tableSorted', options);
+            },
+        });
+
+        // table with custom types
+        xlsSortable.processTable('.table-with-customTypes', {
+            file: 'testXls.xls',
+            typeC: 'evensOnly',
+            guessFunctions: [
+                function (value, column) {
+                    if (column === 2) {
+                        return 'evensOnly';
+                    }
+                    return false;
+                }
+            ],
+            sortFunctions: {
+                evensOnly: function (a, b, sortDir) {
+                    a = parseFloat(a) || -Infinity;
+                    b = parseFloat(b) || -Infinity;
+                    return (sortDir === 'asc' && a > b) || (sortDir === 'desc' && a < b) ?
+                        1 :
+                        (
+                            (sortDir === 'asc' && a < b) || (sortDir === 'desc' && a > b) ?
+                                -1 :
+                                0
+                        );
+                }
+            },
+            printFunctions: {
+                evensOnly: function (value) {
+                    return value % 2 ? '' : value;
+                }
+            },
+        });
+
+    });
+</script>
+
+</body>
+</html>
